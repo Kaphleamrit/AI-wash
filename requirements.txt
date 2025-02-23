@@ -1,0 +1,15 @@
+# Core Dependencies
+streamlit==1.30.0
+python-dotenv==1.0.0
+openai==1.2.4
+PyPDF2==3.0.1
+python-docx==0.8.11
+fpdf==1.7.2
+
+# Markdown Support
+markdown2==2.4.10
+
+# Extra Utilities
+requests==2.31.0
+pandas==2.1.1
+numpy==1.26.2
