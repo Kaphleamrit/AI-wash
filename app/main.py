@@ -120,21 +120,22 @@ if uploaded_file is not None:
     else:
         st.warning("⚠ Unsupported file type.")
 
-    # Display extracted content preview
+    # Display extracted content preview (read-only)
     if content:
         with st.expander("📄 Preview Extracted File Content", expanded=True):
-            st.text_area("File Content Preview", content, height=250)
+            st.text_area("File Content Preview", content, height=250, disabled=True)
 
-# If there's content, send it to AI model for enhancement
-enhanced_content = ""
+# Initialize or update the final editable content
+if "final_content" not in st.session_state:
+    st.session_state.final_content = ""
 
-if content:
+# If there's content, send it to the AI model for enhancement (only once)
+if content and st.session_state.final_content == "":
     st.markdown("---")
     st.markdown("<h3>✨ AI-Enhanced Content</h3>", unsafe_allow_html=True)
 
-    system_prompt = """You are an exceptional writer with expertise in crafting formal, informative, and engaging articles and papers. Your task is to refine and enhance the provided content, ensuring it is clear, well-structured, and compelling while maintaining a professional and authoritative tone. You follow a step-by-step approach, improving coherence, depth, and readability. Remove any redundancies, vague statements, or filler content, and focus on delivering well-structured, factually accurate, and insightful writing that captivates the reader while effectively conveying key ideas with precision and clarity.
-    Don't write I've done this or that when you complete rewriting the article. Just respond with the content of the article, nothing else."""
-
+    system_prompt = """You are an exceptional writer with expertise in crafting formal, informative, and engaging articles and papers. Your task is to refine and enhance the provided content, ensuring it is clear, well-structured, and compelling while maintaining a professional and authoritative tone. Improve coherence, depth, and readability, remove redundancies, vague statements, or filler content, and focus on delivering factually accurate and insightful writing.
+Don't mention that you made changes. Just provide the refined article content."""
     try:
         llm_response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -143,50 +144,66 @@ if content:
                 {"role": "user", "content": content}
             ]
         )
-
         enhanced_content = llm_response.choices[0].message.content
-
         if enhanced_content:
-            # Remove all asterisks from the response
             cleaned_content = re.sub(r"\*", "", enhanced_content)
-            st.text_area("Enhanced AI Response", cleaned_content, height=250)
+            st.session_state.final_content = cleaned_content
     except Exception as e:
         st.error(f"Error processing AI response: {str(e)}")
 
-# Function to generate clean DOCX file
-def generate_docx(text):
-    """Generates a clean DOCX file from enhanced text content."""
-    doc = Document()
-    
-    # Add a title
-    title = doc.add_paragraph()
-    title_run = title.add_run("AI-Enhanced Document")
-    title_run.bold = True
-    title.alignment = 1  # Center align
-    
-    doc.add_paragraph("\n")  # Add spacing
-    
-    # Process text into paragraphs
-    paragraphs = text.split("\n\n")  # Split text by double new lines for paragraph separation
-    for paragraph in paragraphs:
-        if paragraph.strip():  # Ignore empty lines
-            doc.add_paragraph(paragraph.strip())  # Add clean paragraph
+# Display the single editable text area for AI generated content
+final_content = st.text_area("✏️ AI-Enhanced Content (Editable)", st.session_state.final_content, height=250, key="final_edit")
 
-    # Save DOCX to a BytesIO object
+# Extra instruction input to further modify the AI-enhanced content
+extra_instructions = st.text_area("📝 Extra Instructions (Optional)", 
+                                  "Enter any additional instructions to modify the content...", 
+                                  height=100)
+if extra_instructions and st.button("Apply Extra Instructions"):
+    st.markdown("---")
+    st.markdown("<h3>🔄 Updating Content with Extra Instructions</h3>", unsafe_allow_html=True)
+    update_prompt = f"""You are a refined writer tasked with updating the following content according to the extra instructions provided.
+    
+Extra Instructions: {extra_instructions}
+
+Update the content below accordingly. Do not mention that changes were made.
+
+Content:
+{final_content}
+    """
+    try:
+        update_response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": update_prompt},
+                {"role": "user", "content": final_content}
+            ]
+        )
+        updated_content = update_response.choices[0].message.content
+        if updated_content:
+            cleaned_updated_content = re.sub(r"\*", "", updated_content)
+            st.session_state.final_content = cleaned_updated_content
+            final_content = cleaned_updated_content
+    except Exception as e:
+        st.error(f"Error updating AI response: {str(e)}")
+
+# Function to generate a DOCX file without a title
+def generate_docx(text):
+    """Generates a clean DOCX file from the given text without a title."""
+    doc = Document()
+    paragraphs = text.split("\n\n")
+    for paragraph in paragraphs:
+        if paragraph.strip():
+            doc.add_paragraph(paragraph.strip())
     buffer = BytesIO()
     doc.save(buffer)
     buffer.seek(0)
     return buffer
 
-# Show download button if enhanced content is available
-if enhanced_content:
+# Show download button if final content is available
+if final_content:
     st.markdown("---")
     st.markdown("<h3>📥 Download AI-Enhanced Content</h3>", unsafe_allow_html=True)
-
-    # Generate DOCX file with cleaned text (without `*`)
-    cleaned_docx = generate_docx(re.sub(r"\*", "", enhanced_content))
-
-    # Streamlit Download Button
+    cleaned_docx = generate_docx(re.sub(r"\*", "", final_content))
     st.download_button(
         label="📄 Download as DOCX",
         data=cleaned_docx,
@@ -195,7 +212,7 @@ if enhanced_content:
     )
 
 # Footer
-st.markdown("---")  # Divider line
+st.markdown("---")
 st.markdown(
     "<footer>Celly Services (CSI) 2025</footer>",
     unsafe_allow_html=True
