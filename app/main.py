@@ -22,45 +22,74 @@ st.set_page_config(
     layout="wide"
 )
 
-# Apply custom CSS to fix spacing & button color
+# Apply custom CSS for a modern look
 st.markdown("""
     <style>
-        /* Fix title and subtitle visibility */
+        /* General page styling */
+        body {
+            background-color: #f0f2f6;
+            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Title and subtitle styling */
         h1, h3 {
-            color: black !important;  /* Change to white if using dark backgrounds */
+            color: #2c3e50;
             text-align: center;
-            font-size: 2.5rem;
+            font-weight: 600;
         }
 
+        /* Paragraph styling */
         p {
-            color: black !important;  /* Ensures paragraphs are visible */
+            color: #34495e;
+            text-align: center;
+            font-size: 1.1rem;
         }
 
-        /* Ensure Upload button text is readable */
+        /* File uploader styling */
         .stFileUploader label {
-            color: white !important;
+            color: #2980b9;
             font-weight: bold;
         }
 
-        /* Fixing any hidden or light-colored text */
-        .uploadedFileName {
-            color: black !important;
-            font-weight: bold;
+        /* Button styling */
+        .stButton button {
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+        .stButton button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Text area styling */
+        .stTextArea textarea {
+            border-radius: 5px;
+            border: 1px solid #bdc3c7;
+        }
+
+        /* Footer styling */
+        footer {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9rem;
         }
     </style>
 """, unsafe_allow_html=True)
 
-
 # Title and description with a modern UI
 st.title("🚀 AI Wash Service")
 st.markdown("""
-    <p style="text-align: center; font-size: 1.2rem; color: white;">
+    <p>
         This app helps you process and refine your documents using AI. Upload a file and let AI enhance its content!
     </p>
 """, unsafe_allow_html=True)
 
 # File uploader for TXT, DOCX, PDF
-st.markdown("<h3 style='text-align: center;'>📤 Upload Your Document</h3>", unsafe_allow_html=True)
+st.markdown("<h3>📤 Upload Your Document</h3>", unsafe_allow_html=True)
 uploaded_file = st.file_uploader("", type=['txt', 'pdf', 'docx'])
 
 def extract_text_from_pdf(file):
@@ -79,7 +108,7 @@ content = ""
 
 if uploaded_file is not None:
     # Display the file name
-    st.markdown(f"<p style='text-align: center; font-size: 1.2rem; color: white;'>📄 Uploaded file: <b>{uploaded_file.name}</b></p>", unsafe_allow_html=True)
+    st.markdown(f"<p>📄 Uploaded file: <b>{uploaded_file.name}</b></p>", unsafe_allow_html=True)
 
     # Read file content based on file type
     if uploaded_file.type == "text/plain":
@@ -101,7 +130,7 @@ enhanced_content = ""
 
 if content:
     st.markdown("---")
-    st.markdown("<h3 style='text-align: center;'>✨ AI-Enhanced Content</h3>", unsafe_allow_html=True)
+    st.markdown("<h3>✨ AI-Enhanced Content</h3>", unsafe_allow_html=True)
 
     system_prompt = """You are an exceptional writer with expertise in crafting formal, informative, and engaging articles and papers. Your task is to refine and enhance the provided content, ensuring it is clear, well-structured, and compelling while maintaining a professional and authoritative tone. You follow a step-by-step approach, improving coherence, depth, and readability. Remove any redundancies, vague statements, or filler content, and focus on delivering well-structured, factually accurate, and insightful writing that captivates the reader while effectively conveying key ideas with precision and clarity.
     Don't write I've done this or that when you complete rewriting the article. Just respond with the content of the article, nothing else."""
@@ -152,7 +181,7 @@ def generate_docx(text):
 # Show download button if enhanced content is available
 if enhanced_content:
     st.markdown("---")
-    st.markdown("<h3 style='text-align: center;'>📥 Download AI-Enhanced Content</h3>", unsafe_allow_html=True)
+    st.markdown("<h3>📥 Download AI-Enhanced Content</h3>", unsafe_allow_html=True)
 
     # Generate DOCX file with cleaned text (without `*`)
     cleaned_docx = generate_docx(re.sub(r"\*", "", enhanced_content))
@@ -168,6 +197,6 @@ if enhanced_content:
 # Footer
 st.markdown("---")  # Divider line
 st.markdown(
-    "<h4 style='text-align: center; color: white; font-size: 1.2rem;'>Celly Services (CSI) 2025</h4>",
+    "<footer>Celly Services (CSI) 2025</footer>",
     unsafe_allow_html=True
 )
